@@ -2,8 +2,8 @@ package main
 
 import (
 	"os"
-	"restorent-management/middleware"
-	"restorent-management/routes"
+	middleware "restorent-management/middleware"
+	routes "restorent-management/routes"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,12 +19,12 @@ func main() {
 	routes.UserRoutes(router)
 	router.Use(middleware.Authentication())
 
-	routes.FoodRoutes(router)
-	routes.MenuRoutes(router)
-	routes.TableRoutes(router)
-	routes.OrderRoutes(router)
-	routes.OrderItemRoutes(router)
-	routes.InvoiceRoutes(router)
+	// routes.FoodRoutes(router)
+	// routes.MenuRoutes(router)
+	// routes.TableRoutes(router)
+	// routes.OrderRoutes(router)
+	// routes.OrderItemRoutes(router)
+	// routes.InvoiceRoutes(router)
 
 	router.Run(":" + port)
 
