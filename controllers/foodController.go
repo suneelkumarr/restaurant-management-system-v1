@@ -141,67 +141,54 @@ func GetFoodByID() gin.HandlerFunc {
 
 func UpdateFood() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
 
 		var food models.Food
-		var menu models.Menu
+		foodID := c.Param("food_id")
 
-		foodId := c.Param("food_id")
 		if err := c.ShouldBindJSON(&food); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		var updateObj primitive.D
+		updateObj := bson.M{}
 
 		if food.Name != nil {
-			updateObj = append(updateObj, bson.E{"name", food.Name})
+			updateObj["name"] = *food.Name
 		}
 
 		if food.Price != nil {
-			updateObj = append(updateObj, bson.E{"price", food.Price})
+			updateObj["price"] = *food.Price
 		}
 
 		if food.Food_image != nil {
-			updateObj = append(updateObj, bson.E{"food_image", food.Food_image})
+			updateObj["food_image"] = *food.Food_image
 		}
 
 		if food.Menu_id != nil {
-			err := menuCollection.FindOne(ctx, bson.M{"menu_id": food.Menu_id}).Decode(&menu)
-			defer cancel()
+			var menu models.Menu
+			err := menuCollection.FindOne(ctx, bson.M{"menu_id": *food.Menu_id}).Decode(&menu)
 			if err != nil {
-				msg := fmt.Sprintf("message:Menu was not found")
-				c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Menu not found"})
 				return
 			}
-			updateObj = append(updateObj, bson.E{"menu", food.Price})
+			updateObj["menu_id"] = *food.Menu_id
 		}
 
-		food.Updated_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-		updateObj = append(updateObj, bson.E{"updated_at", food.Updated_at})
+		updateObj["updated_at"] = time.Now()
 
-		upsert := true
-		filter := bson.M{"food_id": foodId}
+		filter := bson.M{"food_id": foodID}
+		update := bson.M{"$set": updateObj}
 
-		opt := options.UpdateOptions{
-			Upsert: &upsert,
-		}
+		opts := options.Update().SetUpsert(true)
 
-		result, err := foodCollection.UpdateOne(
-			ctx,
-			filter,
-			bson.D{
-				{"$set", updateObj},
-			},
-			&opt,
-		)
-
+		result, err := foodCollection.UpdateOne(ctx, filter, update, opts)
 		if err != nil {
-			msg := fmt.Sprint("foot item update failed")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Food item update failed"})
 			return
 		}
+
 		c.JSON(http.StatusOK, result)
 	}
-
 }
