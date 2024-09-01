@@ -12,6 +12,6 @@ func FoodRoutes(router *gin.Engine) {
 		foodGroup.GET("", controllers.GetFoods())
 		foodGroup.GET("/:food_id", controllers.GetFoodByID())
 		foodGroup.POST("/create", controllers.CreateFood())
-		// foodGroup.PATCH("/:food_id", controllers.UpdateFood())
+		foodGroup.PATCH("/:food_id", controllers.UpdateFood())
 	}
 }
